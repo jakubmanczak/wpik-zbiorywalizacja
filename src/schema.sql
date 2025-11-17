@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS users (
     id              TEXT NOT NULL UNIQUE PRIMARY KEY,
     handle          TEXT NOT NULL UNIQUE,
-    passhash        TEXT NOT NULL,
+    passhash        TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
