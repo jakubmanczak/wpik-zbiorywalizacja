@@ -13,6 +13,7 @@ use crate::{
     html::{controls, stats},
 };
 
+mod crypto;
 mod database;
 mod html;
 
