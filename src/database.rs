@@ -1,10 +1,8 @@
-use argon2::{Argon2, PasswordHasher, password_hash::SaltString};
-use rand08::rngs::OsRng;
 use rusqlite::{Connection, OptionalExtension};
 use std::error::Error;
 use uuid::Uuid;
 
-use crate::crypto::generate_short_token;
+use crate::{crypto::generate_short_token, users::pwd::hash_password};
 
 const SCHEMA: &str = include_str!("./schema.sql");
 
@@ -30,16 +28,11 @@ pub fn db_check() -> Result<(), Box<dyn Error>> {
         .is_none()
     {
         let pw = generate_short_token();
+        let hash = hash_password(&pw)?;
         conn.prepare("INSERT INTO users VALUES (?1, ?2, ?3)")?
-            .insert([Uuid::max().to_string(), "admin".to_owned(), {
-                let argon = Argon2::default();
-                let salt = SaltString::generate(&mut OsRng);
-                argon
-                    .hash_password(pw.as_bytes(), &salt)
-                    .unwrap()
-                    .to_string()
-            }])?;
-        println!("default infradmin account was made. credentials: admin {pw}");
+            .insert([Uuid::max().to_string(), "admin".to_owned(), hash])?;
+        println!("default infradmin account was made.\nhandle: admin\npasswd: {pw}\n");
+        println!("please change the password for increased safety.");
     }
 
     Ok(())

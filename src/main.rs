@@ -16,6 +16,7 @@ use crate::{
 mod crypto;
 mod database;
 mod html;
+mod users;
 
 const DEFAULT_PORT: u16 = 2025;
 const CSS: &str = include_str!("../web/styles.css");
@@ -38,7 +39,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .route("/live", get(hellaur))
         .route("/styles.css", get(css));
     let l = TcpListener::bind(format!("0.0.0.0:{port}")).await?;
-    println!("Listening on {}", l.local_addr()?);
+    println!("listening on {}", l.local_addr()?);
 
     axum::serve(l, r).await?;
     Ok(())
