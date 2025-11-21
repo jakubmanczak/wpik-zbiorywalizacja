@@ -4,6 +4,7 @@ use rusqlite::Connection;
 use uuid::Uuid;
 
 pub mod pwd;
+pub mod sessions;
 
 pub struct User {
     id: Uuid,
