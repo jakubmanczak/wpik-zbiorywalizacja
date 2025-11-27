@@ -1,8 +1,10 @@
 use std::str::FromStr;
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, Utc};
 use rusqlite::Connection;
 use uuid::Uuid;
+
+use crate::crypto::generate_short_token;
 
 pub struct Session {
     id: Uuid,
@@ -31,6 +33,28 @@ impl Session {
     pub fn is_expired_or_revoked(&self) -> bool {
         self.expiry <= Utc::now() || self.revoked
     }
+
+    /// Create a new session for a user. Returns the session token that should be stored in the cookie.
+    pub fn create(user_id: &Uuid, conn: &Connection) -> Result<String, SessionStructError> {
+        let session_id = Uuid::now_v7();
+        let token = generate_short_token();
+        let now = Utc::now();
+        let expiry = now + Duration::days(30); // 30 day expiry
+
+        conn.prepare(
+            "INSERT INTO sessions (id, token, user_id, expiry, last_access, revoked)
+             VALUES (?1, ?2, ?3, ?4, ?5, 0)",
+        )?
+        .execute([
+            session_id.to_string(),
+            token.clone(),
+            user_id.to_string(),
+            expiry.timestamp().to_string(),
+            now.timestamp().to_string(),
+        ])?;
+
+        Ok(token)
+    }
     pub fn issued(&self) -> DateTime<Utc> {
         let timestamp = self.id.get_timestamp().unwrap();
         DateTime::from_timestamp_millis(timestamp.to_unix().0 as i64).unwrap()
@@ -38,7 +62,7 @@ impl Session {
     pub fn get_by_id(id: &Uuid, conn: &Connection) -> Result<Session, SessionStructError> {
         let pk = id.to_string();
         const QUERY: &str = "
-            SELECT (id, user_id, expiry, last_access, revoked, revoked_at)
+            SELECT id, user_id, expiry, last_access, revoked, revoked_at
             FROM sessions WHERE id = ?1
         ";
         let res = conn.prepare(QUERY)?.query_one([&pk], |row| {
@@ -62,7 +86,7 @@ impl Session {
     }
     pub fn get_by_token(token: &str, conn: &Connection) -> Result<Session, SessionStructError> {
         const QUERY: &str = "
-            SELECT (id, user_id, expiry, last_access, revoked, revoked_at)
+            SELECT id, user_id, expiry, last_access, revoked, revoked_at
             FROM sessions WHERE token = ?1
         ";
         let res = conn.prepare(QUERY)?.query_one([token], |row| {

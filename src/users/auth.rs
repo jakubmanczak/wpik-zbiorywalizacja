@@ -12,7 +12,7 @@ use crate::users::pwd::verify_password;
 use crate::users::sessions::{Session, SessionStructError};
 use crate::users::{User, UserStructError};
 
-const COOKIE_NAME: &str = "wpikzbiorauth";
+pub const COOKIE_NAME: &str = "wpikzbiorauth";
 
 #[derive(thiserror::Error, Debug)]
 pub enum AuthError {

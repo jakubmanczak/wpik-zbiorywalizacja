@@ -8,6 +8,8 @@ fn head(title: &str) -> Markup {
         (DOCTYPE)
         head {
             link rel="stylesheet" href="/styles.css";
+            meta charset="utf-8";
+            meta name="viewport" content="width=device-width, initial-scale=1.0";
             title { (title) }
         }
     }
@@ -37,6 +39,10 @@ pub async fn controls(headers: HeaderMap) -> Result<Markup, (StatusCode, String)
             .mx-auto.max-w-3xl.p-4 {
                 .w-full.p-4.bg-neutral-800.text-neutral-200.rounded.border.border-neutral-600 {
                     p.font-serif.mb-4.text-center.text-xl { "Witaj, " (u.handle) "!" }
+                    form.flex.justify-center method="post" action="/logout" {
+                        button.px-2.border.border-neutral-600.rounded.hover:bg-neutral-700
+                            type="submit" { "Wyloguj się" }
+                    }
                 }
             }
         }
@@ -44,10 +50,13 @@ pub async fn controls(headers: HeaderMap) -> Result<Markup, (StatusCode, String)
             .mx-auto.max-w-3xl.p-4 {
                 .w-full.p-4.bg-neutral-800.text-neutral-200.rounded.border.border-neutral-600 {
                     p.font-serif.mb-4.text-center.text-xl { "Panel niedostępny bez uwierzytelnienia." }
-                    .flex.gap-2.flex-wrap {
-                        input.px-2.border.border-neutral-600.rounded placeholder="Login" {}
-                        input.px-2.border.border-neutral-600.rounded type="password" placeholder="Hasło" {}
-                        button.px-2.border.border-neutral-600.rounded { "Zaloguj się" }
+                    form.flex.gap-2.flex-wrap method="post" action="/login" {
+                        input.px-2.border.border-neutral-600.rounded.bg-neutral-900
+                            name="username" placeholder="Login" required {}
+                        input.px-2.border.border-neutral-600.rounded.bg-neutral-900
+                            type="password" name="password" placeholder="Hasło" required {}
+                        button.px-2.border.border-neutral-600.rounded.hover:bg-neutral-700
+                            type="submit" { "Zaloguj się" }
                     }
                 }
             }
