@@ -38,10 +38,12 @@ pub async fn controls(headers: HeaderMap) -> Result<Markup, (StatusCode, String)
         @if let Some(u) = user {
             .mx-auto.max-w-3xl.p-4 {
                 .w-full.p-4.bg-neutral-800.text-neutral-200.rounded.border.border-neutral-600 {
-                    p.font-serif.mb-4.text-center.text-xl { "Witaj, " (u.handle) "!" }
-                    form.flex.justify-center method="post" action="/logout" {
-                        button.px-2.border.border-neutral-600.rounded.hover:bg-neutral-700
-                            type="submit" { "Wyloguj się" }
+                    .flex.flex-row.justify-between {
+                        p.font-serif.text-center.text-xl { "Witaj, " (u.handle) "!" }
+                        form.flex.justify-center method="post" action="/logout" {
+                            button.px-2.border.border-neutral-600.rounded.hover:bg-neutral-700.cursor-pointer
+                                type="submit" { "Wyloguj się" }
+                        }
                     }
                 }
             }
@@ -55,7 +57,7 @@ pub async fn controls(headers: HeaderMap) -> Result<Markup, (StatusCode, String)
                             name="username" placeholder="Login" required {}
                         input.px-2.border.border-neutral-600.rounded.bg-neutral-900
                             type="password" name="password" placeholder="Hasło" required {}
-                        button.px-2.border.border-neutral-600.rounded.hover:bg-neutral-700
+                        button.px-2.border.border-neutral-600.rounded.hover:bg-neutral-700.cursor-pointer
                             type="submit" { "Zaloguj się" }
                     }
                 }
