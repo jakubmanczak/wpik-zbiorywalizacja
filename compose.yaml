@@ -1,0 +1,14 @@
+services:
+  server:
+    build:
+      context: .
+      target: final
+    container_name: wpikzbiory
+    ports:
+      - 2025:2025
+    volumes:
+      - db:/app/data
+    environment:
+      - DB_PATH=/app/data/db.db
+volumes:
+  db:
