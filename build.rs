@@ -11,28 +11,30 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("cargo:rerun-if-changed=web");
     println!("cargo:rerun-if-changed=src");
 
-    let os = env::var("CARGO_CFG_TARGET_OS").unwrap_or_else(|_| String::from("unknown"));
-    let arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap_or_else(|_| String::from("unknown"));
-    let download_url = match (os.as_str(), arch.as_str()) {
-        ("macos", "aarch64") => {
-            "https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-macos-arm64"
-        }
-        ("linux", "x86_64") => {
-            "https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64"
-        }
-        ("linux", "aarch64") => {
-            "https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-arm64"
-        }
-        _ => return Err(format!("Unsupported platform: {} {}", os, arch).into()),
-    };
+    if std::env::var("IN_DOCKER").is_err() {
+        let os = env::var("CARGO_CFG_TARGET_OS").unwrap_or_else(|_| String::from("unknown"));
+        let arch = env::var("CARGO_CFG_TARGET_ARCH").unwrap_or_else(|_| String::from("unknown"));
+        let download_url = match (os.as_str(), arch.as_str()) {
+            ("macos", "aarch64") => {
+                "https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-macos-arm64"
+            }
+            ("linux", "x86_64") => {
+                "https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64"
+            }
+            ("linux", "aarch64") => {
+                "https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-arm64"
+            }
+            _ => return Err(format!("Unsupported platform: {} {}", os, arch).into()),
+        };
 
-    let out_dir = PathBuf::from(env::var("OUT_DIR")?);
-    let tailwind_binary = out_dir.join("tailwind");
-    fs::create_dir_all(&out_dir)?;
+        let out_dir = PathBuf::from(env::var("OUT_DIR")?);
+        let tailwind_binary = out_dir.join("tailwind");
+        fs::create_dir_all(&out_dir)?;
 
-    download_tailwind(&download_url, &tailwind_binary)?;
-    println!("cargo:rustc-env=TAILWIND_BIN={}", tailwind_binary.display());
-    run_tailwind(&tailwind_binary)?;
+        download_tailwind(&download_url, &tailwind_binary)?;
+        println!("cargo:rustc-env=TAILWIND_BIN={}", tailwind_binary.display());
+        run_tailwind(&tailwind_binary)?;
+    }
 
     Ok(())
 }
