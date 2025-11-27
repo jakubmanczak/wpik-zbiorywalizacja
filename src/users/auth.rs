@@ -1,5 +1,5 @@
 use axum::http::{
-    HeaderMap,
+    HeaderMap, StatusCode,
     header::{AUTHORIZATION, COOKIE},
 };
 use base64::prelude::*;
@@ -30,6 +30,20 @@ pub enum AuthError {
     InvalidUtf8(#[from] std::string::FromUtf8Error),
     #[error("Database error: {0}")]
     DatabaseError(#[from] rusqlite::Error),
+}
+impl AuthError {
+    pub fn status_code(&self) -> StatusCode {
+        use AuthError as AE;
+        match self {
+            AE::InvalidCredentials => StatusCode::UNAUTHORIZED,
+            AE::SessionError(_) | AE::UserError(_) | AE::DatabaseError(_) => {
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
+            AE::InvalidFormat | AE::InvalidUtf8(_) | AE::InvalidBase64(_) => {
+                StatusCode::BAD_REQUEST
+            }
+        }
+    }
 }
 
 enum AuthScheme<'a> {

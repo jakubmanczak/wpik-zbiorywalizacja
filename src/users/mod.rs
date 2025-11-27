@@ -10,8 +10,8 @@ pub mod sessions;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct User {
-    id: Uuid,
-    handle: String,
+    pub id: Uuid,
+    pub handle: String,
 }
 
 #[derive(thiserror::Error, Debug)]
