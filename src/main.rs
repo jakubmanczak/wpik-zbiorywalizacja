@@ -1,16 +1,17 @@
 use std::error::Error;
 
 use axum::{
-    Router,
-    http::{StatusCode, header},
+    Json, Router, debug_handler,
+    http::{HeaderMap, StatusCode, header},
     response::{IntoResponse, Response},
     routing::get,
 };
 use tokio::net::TcpListener;
 
 use crate::{
-    database::db_check,
+    database::{db_check, open_db},
     html::{controls, stats},
+    users::User,
 };
 
 mod crypto;
@@ -37,7 +38,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .route("/", get(stats))
         .route("/panel", get(controls))
         .route("/live", get(hellaur))
-        .route("/styles.css", get(css));
+        .route("/styles.css", get(css))
+        .route("/api/me", get(me));
     let l = TcpListener::bind(format!("0.0.0.0:{port}")).await?;
     println!("listening on {}", l.local_addr()?);
 
@@ -51,4 +53,21 @@ async fn hellaur() -> Response {
 
 async fn css() -> Response {
     ([(header::CONTENT_TYPE, "text/css")], CSS).into_response()
+}
+
+async fn setlogin() -> Response {
+    ().into_response()
+}
+
+#[debug_handler]
+async fn me(headers: HeaderMap) -> Result<Response, (StatusCode, String)> {
+    let conn =
+        open_db().map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "couldnt open db".into()))?;
+    let user = User::authenticate(&headers, &conn)
+        .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
+    if let Some(u) = user {
+        Ok(Json(u).into_response())
+    } else {
+        Ok(Json(()).into_response())
+    }
 }

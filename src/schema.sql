@@ -11,10 +11,28 @@ CREATE TABLE IF NOT EXISTS sessions (
     expiry          INTEGER NOT NULL,
     last_access     INTEGER NOT NULL,
     revoked         INTEGER NOT NULL DEFAULT 0,
-    revoked_at      INTEGER DEFAULT NULL,
+    revoked_at      INTEGER DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS logs (
     id              TEXT NOT NULL UNIQUE PRIMARY KEY,
     action          TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS containers (
+    id              TEXT NOT NULL UNIQUE PRIMARY KEY,
+    name            TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS rewards (
+    id              TEXT NOT NULL UNIQUE PRIMARY KEY,
+    name            TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS contributions (
+    id              TEXT NOT NULL UNIQUE PRIMARY KEY,
+    container       TEXT DEFAULT NULL REFERENCES containers(id),
+    amount          INTEGER DEFAULT 0,
+    notes           TEXT DEFAULT NULL,
+    reward          TEXT DEFAULT NULL
 );

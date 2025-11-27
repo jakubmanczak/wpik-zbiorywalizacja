@@ -24,6 +24,10 @@ pub enum SessionStructError {
 }
 
 impl Session {
+    pub fn user_id(&self) -> &Uuid {
+        &self.user_id
+    }
+
     pub fn is_expired_or_revoked(&self) -> bool {
         self.expiry <= Utc::now() || self.revoked
     }

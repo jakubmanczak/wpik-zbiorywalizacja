@@ -1,11 +1,14 @@
 use std::str::FromStr;
 
 use rusqlite::Connection;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+pub mod auth;
 pub mod pwd;
 pub mod sessions;
 
+#[derive(Debug, Serialize, Deserialize)]
 pub struct User {
     id: Uuid,
     handle: String,
