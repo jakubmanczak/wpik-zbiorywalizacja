@@ -13,6 +13,10 @@ use crate::users::sessions::{Session, SessionStructError};
 use crate::users::{User, UserStructError};
 
 pub const COOKIE_NAME: &str = "wpikzbiorauth";
+pub const COOKIE_CLEAR: &str = concat!(
+    "wpikzbiorauth",
+    "=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0"
+);
 
 #[derive(thiserror::Error, Debug)]
 pub enum AuthError {
@@ -41,6 +45,18 @@ impl AuthError {
             }
             AE::InvalidFormat | AE::InvalidUtf8(_) | AE::InvalidBase64(_) => {
                 StatusCode::BAD_REQUEST
+            }
+        }
+    }
+    pub fn msg(&self) -> &str {
+        use AuthError as AE;
+        match self {
+            AE::InvalidCredentials => "Twoja sesja wygasła lub jest niepoprawna. Spróbuj ponownie.",
+            AE::SessionError(_) | AE::UserError(_) | AE::DatabaseError(_) => {
+                "Błąd serwera. Skontaktuj się z webmasterem."
+            }
+            AE::InvalidFormat | AE::InvalidBase64(_) | AE::InvalidUtf8(_) => {
+                "Zły format danych logowania. Skontaktuj się z webmasterem."
             }
         }
     }
@@ -110,7 +126,6 @@ impl User {
             }
         }
 
-        // Try authentication in priority order
         match (basic_auth, bearer_auth) {
             (Some(credentials), _) => authenticate_basic(credentials, conn),
             (None, Some(token)) => authenticate_bearer(token, conn),

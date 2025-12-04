@@ -1,6 +1,10 @@
-use axum::http::{HeaderMap, StatusCode};
+use axum::extract::Query;
+use axum::http::{HeaderMap, StatusCode, header};
+use axum::response::{IntoResponse, Response};
 use maud::{DOCTYPE, Markup, html};
+use serde::Deserialize;
 
+use crate::users::auth::COOKIE_CLEAR;
 use crate::{database::open_db, users::User};
 
 fn head(title: &str) -> Markup {
@@ -24,15 +28,28 @@ pub async fn stats() -> Markup {
     }
 }
 
-pub async fn controls(headers: HeaderMap) -> Result<Markup, (StatusCode, String)> {
-    let conn =
-        open_db().map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "couldnt open db".into()))?;
-    let user = User::authenticate(&headers, &conn).map_err(|e| (e.status_code(), e.to_string()))?;
-    Ok(html! {
+#[derive(Deserialize)]
+pub struct LoginErrorQuery {
+    pub error: Option<String>,
+}
+pub async fn controls(headers: HeaderMap, Query(query): Query<LoginErrorQuery>) -> Response {
+    let conn = match open_db() {
+        Ok(c) => c,
+        Err(_) => {
+            return (StatusCode::INTERNAL_SERVER_ERROR, "Couldn't open database").into_response();
+        }
+    };
+    let (user, error_msg) = match User::authenticate(&headers, &conn) {
+        Ok(user) => (user, query.error),
+        Err(e) => (None, Some(e.msg().to_string())),
+    };
+
+    ([if error_msg.is_some() {(header::SET_COOKIE.as_str(), COOKIE_CLEAR)} else {("auth", "good")}],
+    html! {
         (head("Zbiorywalizacja WPiK"))
         body.bg-neutral-900.text-neutral-300.min-h-screen.w-full;
         .font-serif.flex.justify-between.max-w-3xl.mx-auto.p-4 {
-            p { "Zbiorywalizacja WPiK" }
+            a href="/" { p { "Zbiorywalizacja WPiK" } }
             p { "Panel kontrolny" }
         }
         @if let Some(u) = user {
@@ -52,6 +69,11 @@ pub async fn controls(headers: HeaderMap) -> Result<Markup, (StatusCode, String)
             .mx-auto.max-w-3xl.p-4 {
                 .w-full.p-4.bg-neutral-800.text-neutral-200.rounded.border.border-neutral-600 {
                     p.font-serif.mb-4.text-center.text-xl { "Panel niedostępny bez uwierzytelnienia." }
+                    @if let Some(error_msg) = error_msg {
+                        .mb-4.p-3.bg-red-900.bg-opacity-50.border.border-red-700.rounded.text-red-200 {
+                            p { (error_msg) }
+                        }
+                    }
                     form.flex.gap-2.flex-wrap method="post" action="/login" {
                         input.px-2.border.border-neutral-600.rounded.bg-neutral-900
                             name="username" placeholder="Login" required {}
@@ -63,5 +85,5 @@ pub async fn controls(headers: HeaderMap) -> Result<Markup, (StatusCode, String)
                 }
             }
         }
-    })
+    }).into_response()
 }
