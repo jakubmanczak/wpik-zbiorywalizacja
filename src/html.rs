@@ -44,46 +44,86 @@ pub async fn controls(headers: HeaderMap, Query(query): Query<LoginErrorQuery>) 
         Err(e) => (None, Some(e.msg().to_string())),
     };
 
-    ([if error_msg.is_some() {(header::SET_COOKIE.as_str(), COOKIE_CLEAR)} else {("auth", "good")}],
+    (
+        [if error_msg.is_some() {
+            (header::SET_COOKIE.as_str(), COOKIE_CLEAR)
+        } else {
+            ("auth", "good")
+        }],
+        html! {
+            (head("Zbiorywalizacja WPiK"))
+            body.bg-neutral-900.text-neutral-300.min-h-screen.w-full;
+            .font-serif.flex.justify-between.max-w-3xl.mx-auto.p-4 {
+                a href="/" { p { "Zbiorywalizacja WPiK" } }
+                p { "Panel kontrolny" }
+            }
+            @if let Some(u) = user {
+                (controls_user_witaj(u))
+                (controls_new_contributions())
+            }
+            @else {
+                (controls_user_login(error_msg))
+            }
+        },
+    )
+        .into_response()
+}
+
+const OPTIONS: &[&str] = &["Kognitywistyka", "Psychologia"];
+fn controls_new_contributions() -> Markup {
     html! {
-        (head("Zbiorywalizacja WPiK"))
-        body.bg-neutral-900.text-neutral-300.min-h-screen.w-full;
-        .font-serif.flex.justify-between.max-w-3xl.mx-auto.p-4 {
-            a href="/" { p { "Zbiorywalizacja WPiK" } }
-            p { "Panel kontrolny" }
-        }
-        @if let Some(u) = user {
-            .mx-auto.max-w-3xl.p-4 {
-                .w-full.p-4.bg-neutral-800.text-neutral-200.rounded.border.border-neutral-600 {
-                    .flex.flex-row.justify-between {
-                        p.font-serif.text-center.text-xl { "Witaj, " (u.handle) "!" }
-                        form.flex.justify-center method="post" action="/logout" {
-                            button.px-2.border.border-neutral-600.rounded.hover:bg-neutral-700.cursor-pointer
-                                type="submit" { "Wyloguj się" }
-                        }
+        .mx-auto.max-w-3xl.p-4 {
+            p.font-serif.text-xl.ml-1 { "Nowy datek" }
+            .w-full.p-4.bg-neutral-800.text-neutral-200.rounded.border.border-neutral-600 {
+                label for="contrcontainer" class="mr-4" { "Pojemnik" }
+                select name="contrcontainer" id="contrcontainer" {
+                    @for c in OPTIONS {
+                        option value=(c) { (c) }
                     }
                 }
+                br;
+                label for="contramt" class="mr-4" { "Amount" }
+                input name="contramt" type="number" step="0.01" min="0" required value="5";
             }
         }
-        @else {
-            .mx-auto.max-w-3xl.p-4 {
-                .w-full.p-4.bg-neutral-800.text-neutral-200.rounded.border.border-neutral-600 {
-                    p.font-serif.mb-4.text-center.text-xl { "Panel niedostępny bez uwierzytelnienia." }
-                    @if let Some(error_msg) = error_msg {
-                        .mb-4.p-3.bg-red-900.bg-opacity-50.border.border-red-700.rounded.text-red-200 {
-                            p { (error_msg) }
-                        }
-                    }
-                    form.flex.gap-2.flex-wrap method="post" action="/login" {
-                        input.px-2.border.border-neutral-600.rounded.bg-neutral-900
-                            name="username" placeholder="Login" required {}
-                        input.px-2.border.border-neutral-600.rounded.bg-neutral-900
-                            type="password" name="password" placeholder="Hasło" required {}
+    }
+}
+
+fn controls_user_witaj(u: User) -> Markup {
+    html! {
+        .mx-auto.max-w-3xl.p-4 {
+            .w-full.p-4.bg-neutral-800.text-neutral-200.rounded.border.border-neutral-600 {
+                .flex.flex-row.justify-between {
+                    p.font-serif.text-center.text-xl { "Witaj, " (u.handle) "!" }
+                    form.flex.justify-center method="post" action="/logout" {
                         button.px-2.border.border-neutral-600.rounded.hover:bg-neutral-700.cursor-pointer
-                            type="submit" { "Zaloguj się" }
+                            type="submit" { "Wyloguj się" }
                     }
                 }
             }
         }
-    }).into_response()
+    }
+}
+
+fn controls_user_login(error_msg: Option<String>) -> Markup {
+    html! {
+        .mx-auto.max-w-3xl.p-4 {
+            .w-full.p-4.bg-neutral-800.text-neutral-200.rounded.border.border-neutral-600 {
+                p.font-serif.mb-4.text-center.text-xl { "Panel niedostępny bez uwierzytelnienia." }
+                @if let Some(error_msg) = error_msg {
+                    .mb-4.p-3.bg-red-900.bg-opacity-50.border.border-red-700.rounded.text-red-200 {
+                        p { (error_msg) }
+                    }
+                }
+                form.flex.gap-2.flex-wrap method="post" action="/login" {
+                    input.px-2.border.border-neutral-600.rounded.bg-neutral-900
+                        name="username" placeholder="Login" required {}
+                    input.px-2.border.border-neutral-600.rounded.bg-neutral-900
+                        type="password" name="password" placeholder="Hasło" required {}
+                    button.px-2.border.border-neutral-600.rounded.hover:bg-neutral-700.cursor-pointer
+                        type="submit" { "Zaloguj się" }
+                }
+            }
+        }
+    }
 }
