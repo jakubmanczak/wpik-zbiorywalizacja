@@ -36,3 +36,11 @@ CREATE TABLE IF NOT EXISTS contributions (
     notes           TEXT DEFAULT NULL,
     reward          TEXT DEFAULT NULL
 );
+
+CREATE TABLE IF NOT EXISTS config (
+    -- only one record; instance configuration stored under id 0
+    --      id_zero is not a primary key so as to not trigger
+    --      sqlite autoincrement making it actually 1 instead
+    id_zero                             INTEGER UNIQUE DEFAULT 0,
+    default_contribution_amount         INTEGER DEFAULT 500 -- in grosze
+);

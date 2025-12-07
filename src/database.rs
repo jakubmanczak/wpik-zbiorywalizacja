@@ -35,5 +35,18 @@ pub fn db_check() -> Result<(), Box<dyn Error>> {
         println!("please change the password for increased safety.");
     }
 
+    match conn
+        .prepare("SELECT * FROM config WHERE id_zero = 0")?
+        .query_one([], |_| Ok(()))
+        .optional()?
+    {
+        Some(_) => (),
+        None => {
+            conn.prepare("INSERT INTO config DEFAULT VALUES")?
+                .insert([])
+                .unwrap();
+        }
+    };
+
     Ok(())
 }

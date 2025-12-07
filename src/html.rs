@@ -43,6 +43,11 @@ pub async fn controls(headers: HeaderMap, Query(query): Query<LoginErrorQuery>) 
         Ok(user) => (user, query.error),
         Err(e) => (None, Some(e.msg().to_string())),
     };
+    let defcontramt = conn
+        .prepare("SELECT default_contribution_amount FROM config WHERE id_zero = 0")
+        .unwrap()
+        .query_one([], |r| Ok(r.get::<_, u32>(0).unwrap()))
+        .unwrap();
 
     (
         [if error_msg.is_some() {
@@ -59,7 +64,7 @@ pub async fn controls(headers: HeaderMap, Query(query): Query<LoginErrorQuery>) 
             }
             @if let Some(u) = user {
                 (controls_user_witaj(u))
-                (controls_new_contributions())
+                (controls_new_contributions(defcontramt))
             }
             @else {
                 (controls_user_login(error_msg))
@@ -70,7 +75,7 @@ pub async fn controls(headers: HeaderMap, Query(query): Query<LoginErrorQuery>) 
 }
 
 const OPTIONS: &[&str] = &["Kognitywistyka", "Psychologia"];
-fn controls_new_contributions() -> Markup {
+fn controls_new_contributions(default_contramt: u32) -> Markup {
     html! {
         .mx-auto.max-w-3xl.p-4 {
             p.font-serif.text-xl.ml-1 { "Nowy datek" }
@@ -83,7 +88,9 @@ fn controls_new_contributions() -> Markup {
                 }
                 br;
                 label for="contramt" class="mr-4" { "Amount" }
-                input name="contramt" type="number" step="0.01" min="0" required value="5";
+                input name="contramt" type="number" step="0.01" min="0" required value=(
+                    format!("{}.{}", default_contramt/100, default_contramt%100)
+                );
             }
         }
     }
