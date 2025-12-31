@@ -28,6 +28,12 @@ pub async fn stats() -> Markup {
     }
 }
 
+pub const JS_CLEAN_QUERY: &str = r#"
+if (window.location.search) {
+    history.replaceState({}, '', window.location.pathname);
+}
+"#;
+
 #[derive(Deserialize)]
 pub struct LoginErrorQuery {
     pub error: Option<String>,
@@ -121,6 +127,7 @@ fn controls_user_login(error_msg: Option<String>) -> Markup {
                     .mb-4.p-3.bg-red-900.bg-opacity-50.border.border-red-700.rounded.text-red-200 {
                         p { (error_msg) }
                     }
+                    script { (JS_CLEAN_QUERY) }
                 }
                 form.flex.gap-2.flex-wrap method="post" action="/login" {
                     input.px-2.border.border-neutral-600.rounded.bg-neutral-900
