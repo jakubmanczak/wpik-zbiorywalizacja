@@ -1,7 +1,7 @@
 use axum::extract::Query;
 use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::{IntoResponse, Response};
-use maud::{DOCTYPE, Markup, html};
+use maud::{DOCTYPE, Markup, PreEscaped, html};
 use serde::Deserialize;
 
 use crate::users::auth::COOKIE_CLEAR;
@@ -33,6 +33,8 @@ if (window.location.search) {
     history.replaceState({}, '', window.location.pathname);
 }
 "#;
+pub const SVG_PACKAGE_OPEN: &str = include_str!("./lucideicons/package-open.svg");
+pub const SVG_SETTINGS: &str = include_str!("./lucideicons/settings.svg");
 
 #[derive(Deserialize)]
 pub struct LoginErrorQuery {
@@ -128,6 +130,10 @@ fn controls_logs() -> Markup {
     }
 }
 
+const WITAJ_LINKS: &[(&str, &str)] = &[
+    ("Pojemniki", "/panel/pojemniki"),
+    ("Ustawienia & konta", "/panel/ustawienia"),
+];
 fn controls_user_witaj(u: User) -> Markup {
     html! {
         .mx-auto.max-w-3xl.p-4 {
@@ -137,6 +143,22 @@ fn controls_user_witaj(u: User) -> Markup {
                     form.flex.justify-center method="post" action="/logout" {
                         button.px-2.border.border-neutral-600.rounded.hover:bg-neutral-700.cursor-pointer
                             type="submit" { "Wyloguj się" }
+                    }
+                }
+            }
+            .w-full.flex.gap-2.my-2 {
+                @for (name, url) in WITAJ_LINKS {
+                    a href=(url) .p-2.flex-1.border.border-neutral-600.bg-neutral-800.rounded.relative.overflow-hidden {
+                        (name)
+                        @if WITAJ_LINKS.iter().any(|(n, _)| n == name) {
+                            .absolute.right-0.bottom-0.text-neutral-500.scale-200.rotate-345 {
+                                @match *name {
+                                    "Pojemniki" => (PreEscaped(SVG_PACKAGE_OPEN)),
+                                    "Ustawienia & konta" => (PreEscaped(SVG_SETTINGS)),
+                                    _ => {},
+                                }
+                            }
+                        }
                     }
                 }
             }
