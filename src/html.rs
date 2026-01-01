@@ -71,6 +71,8 @@ pub async fn controls(headers: HeaderMap, Query(query): Query<LoginErrorQuery>) 
             @if let Some(u) = user {
                 (controls_user_witaj(u))
                 (controls_new_contributions(defcontramt))
+                // (controls_logs())
+                // (controls_globalconf())
             }
             @else {
                 (controls_user_login(error_msg))
@@ -85,18 +87,42 @@ fn controls_new_contributions(default_contramt: u32) -> Markup {
     html! {
         .mx-auto.max-w-3xl.p-4 {
             p.font-serif.text-xl.ml-1 { "Nowy datek" }
-            .w-full.p-4.bg-neutral-800.text-neutral-200.rounded.border.border-neutral-600 {
-                label for="contrcontainer" class="mr-4" { "Pojemnik" }
-                select name="contrcontainer" id="contrcontainer" {
+            form .w-full.flex.flex-col.gap-1.p-4.bg-neutral-800.text-neutral-200.rounded.border.border-neutral-600 {
+                label for="contrbank" .mr-4 { "Pojemnik" }
+                select name="contrbank" id="contrbank" .mb-3.p-2.border.border-neutral-600.rounded.bg-neutral-900 {
                     @for c in OPTIONS {
                         option value=(c) { (c) }
                     }
                 }
-                br;
-                label for="contramt" class="mr-4" { "Amount" }
-                input name="contramt" type="number" step="0.01" min="0" required value=(
-                    format!("{}.{}", default_contramt/100, default_contramt%100)
-                );
+                label for="contramt" .mr-4{"Wielkość datku " span.text-neutral-500{"(w zł)"} }
+                input name="contramt" type="number" step="0.01" min="0" required
+                    value=(format!("{:.2}", default_contramt as f64 / 100.0))
+                    .mb-3.py-1.px-2.border.border-neutral-600.rounded.bg-neutral-900;
+                label for "contrnote" .mr-4{"Notatka do datku " span.text-neutral-500{"(opcjonalnie)"}}
+                input name="contrnote" type="text" .mb-3.py-1.px-2.border.border-neutral-600.rounded.bg-neutral-900;
+                button type="submit" .p-1.px-2.border.border-neutral-600.rounded.ml-auto { "Odnotuj datek" }
+            }
+        }
+    }
+}
+
+fn controls_globalconf() -> Markup {
+    html! {
+        .mx-auto.max-w-3xl.p-4 {
+            p.font-serif.text-xl.ml-1 { "Ustawienia zbiorywalizacji" }
+            .w-full.p-4.bg-neutral-800.text-neutral-200.rounded.border.border-neutral-600 {
+
+            }
+        }
+    }
+}
+
+fn controls_logs() -> Markup {
+    html! {
+        .mx-auto.max-w-3xl.p-4 {
+            p.font-serif.text-xl.ml-1 { "Rejestr aktywności" }
+            .w-full.p-4.bg-neutral-800.text-neutral-200.rounded.border.border-neutral-600 {
+
             }
         }
     }
