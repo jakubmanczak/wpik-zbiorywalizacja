@@ -102,9 +102,14 @@ pub async fn login_redir(Form(form): Form<LoginForm>) -> Response {
         }
     };
 
+    let secure = match cfg!(debug_assertions) {
+        false => "; Secure",
+        true => "",
+    };
     let cookie = format!(
-        "{COOKIE_NAME}={token}; Path=/; HttpOnly; SameSite=Lax; Max-Age={}",
-        60 * 60 * 24 * 30 // 30 days in seconds
+        "{COOKIE_NAME}={token}; Path=/; HttpOnly; SameSite=Lax; Max-Age={}{}",
+        60 * 60 * 24 * 30, // 30 days in seconds
+        secure
     );
     ([(header::SET_COOKIE, cookie)], Redirect::to("/panel")).into_response()
 }
