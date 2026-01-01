@@ -79,18 +79,18 @@ pub async fn login_redir(Form(form): Form<LoginForm>) -> Response {
     let password_valid = match verify_password(&form.password, &passhash) {
         Ok(valid) => valid,
         Err(_) => {
-            return Redirect::to("/panel?error=Błąd+weryfikacji+hasła.").into_response();
+            return Redirect::to("/panel?error=Błąd weryfikacji hasła.").into_response();
         }
     };
 
     if !password_valid {
-        return Redirect::to("/panel?error=Nieprawidłowy+login+lub+hasło.").into_response();
+        return Redirect::to("/panel?error=Nieprawidłowy login lub hasło.").into_response();
     }
 
     let user_id = match uuid::Uuid::parse_str(&id_str) {
         Ok(id) => id,
         Err(_) => {
-            return Redirect::to("/panel?error=Błąd+serwera.+Spróbuj+ponownie+później.")
+            return Redirect::to("/panel?error=Błąd serwera. Spróbuj ponownie później.")
                 .into_response();
         }
     };
@@ -98,7 +98,7 @@ pub async fn login_redir(Form(form): Form<LoginForm>) -> Response {
     let token = match Session::create(&user_id, &conn) {
         Ok(t) => t,
         Err(_) => {
-            return Redirect::to("/panel?error=Nie+udało+się+utworzyć+sesji.").into_response();
+            return Redirect::to("/panel?error=Nie udało się utworzyć sesji.").into_response();
         }
     };
 
