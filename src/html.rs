@@ -146,12 +146,12 @@ fn controls_user_witaj(u: User) -> Markup {
                     }
                 }
             }
-            .w-full.flex.gap-2.my-2 {
+            .w-full.flex.flex-col.sm:flex-row.gap-2.my-2 {
                 @for (name, url) in WITAJ_LINKS {
                     a href=(url) .p-2.flex-1.border.border-neutral-600.bg-neutral-800.rounded.relative.overflow-hidden {
-                        (name)
+                        .z-20.relative { (name) }
                         @if WITAJ_LINKS.iter().any(|(n, _)| n == name) {
-                            .absolute.right-0.bottom-0.text-neutral-500.scale-200.rotate-345 {
+                            div class="absolute right-0 bottom-0 [&>*]:z-10 text-neutral-700 scale-200 rotate-345" {
                                 @match *name {
                                     "Pojemniki" => (PreEscaped(SVG_PACKAGE_OPEN)),
                                     "Ustawienia & konta" => (PreEscaped(SVG_SETTINGS)),
