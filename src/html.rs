@@ -84,7 +84,7 @@ pub async fn controls(headers: HeaderMap, Query(query): Query<LoginErrorQuery>) 
         .into_response()
 }
 
-const OPTIONS: &[&str] = &["Kognitywistyka", "Psychologia"];
+const OPTIONS: &[(&str, &str)] = &[("Kognitywistyka", "kogni"), ("Psychologia", "psych")];
 fn controls_new_contributions(default_contramt: u32) -> Markup {
     html! {
         .mx-auto.max-w-3xl.p-4 {
@@ -92,8 +92,8 @@ fn controls_new_contributions(default_contramt: u32) -> Markup {
             form .w-full.flex.flex-col.gap-1.p-4.bg-neutral-800.text-neutral-200.rounded.border.border-neutral-600 {
                 label for="contrbank" .mr-4 { "Pojemnik" }
                 select name="contrbank" id="contrbank" .mb-3.p-2.border.border-neutral-600.rounded.bg-neutral-900 {
-                    @for c in OPTIONS {
-                        option value=(c) { (c) }
+                    @for (name, id) in OPTIONS {
+                        option value=(id) { (name) }
                     }
                 }
                 label for="contramt" .mr-4{"Wielkość datku " span.text-neutral-500{"(w zł)"} }
