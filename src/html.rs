@@ -68,11 +68,35 @@ pub async fn controls(headers: HeaderMap, Query(query): Query<LoginErrorQuery>) 
         Ok(user) => (user, query.error),
         Err(e) => (None, Some(e.msg().to_string())),
     };
-    let defcontramt = conn
+    let defcontramt = match conn
         .prepare("SELECT default_contribution_amount FROM config WHERE id_zero = 0")
         .unwrap()
         .query_one([], |r| Ok(r.get::<_, u32>(0).unwrap()))
-        .unwrap();
+    {
+        Ok(d) => d,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to read config data",
+            )
+                .into_response();
+        }
+    };
+    let containers = match conn
+        .prepare("SELECT id, name FROM containers")
+        .unwrap()
+        .query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))
+        .and_then(|rows| rows.collect::<Result<Vec<_>, _>>())
+    {
+        Ok(c) => c,
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Failed to read container data",
+            )
+                .into_response();
+        }
+    };
 
     (
         [if error_msg.is_some() {
@@ -89,7 +113,7 @@ pub async fn controls(headers: HeaderMap, Query(query): Query<LoginErrorQuery>) 
             }
             @if let Some(u) = user {
                 (controls_user_witaj(u))
-                (controls_new_contributions(defcontramt))
+                (controls_new_contributions(&containers, defcontramt))
                 // (controls_logs())
                 // (controls_globalconf())
             }
@@ -101,25 +125,30 @@ pub async fn controls(headers: HeaderMap, Query(query): Query<LoginErrorQuery>) 
         .into_response()
 }
 
-const OPTIONS: &[(&str, &str)] = &[("Kognitywistyka", "kogni"), ("Psychologia", "psych")];
-fn controls_new_contributions(default_contramt: u32) -> Markup {
+fn controls_new_contributions(containers: &[(String, String)], default_contramt: u32) -> Markup {
     html! {
         .mx-auto.max-w-3xl.p-4 {
             p.font-serif.text-xl.ml-1 { "Nowy datek" }
-            form .w-full.flex.flex-col.gap-1.p-4.bg-neutral-800.text-neutral-200.rounded.border.border-neutral-600 {
-                label for="contrbank" .mr-4 { "Pojemnik" }
-                select name="contrbank" id="contrbank" .mb-3.p-2.border.border-neutral-600.rounded.bg-neutral-900 {
-                    @for (name, id) in OPTIONS {
-                        option value=(id) { (name) }
+            .w-full.p-4.bg-neutral-800.text-neutral-200.rounded.border.border-neutral-600 {
+                @if containers.len() == 0 {
+                    p.text-center { "Najpierw stwórz pojemnik!" }
+                } @else {
+                    form .flex.flex-col.gap-1 {
+                        label for="contrbank" .mr-4 { "Pojemnik" }
+                        select name="contrbank" id="contrbank" .mb-3.p-2.border.border-neutral-600.rounded.bg-neutral-900 {
+                            @for (id, name) in containers {
+                                option value=(id) { (name) }
+                            }
+                        }
+                        label for="contramt" .mr-4{"Wielkość datku " span.text-neutral-500{"(w zł)"} }
+                        input name="contramt" type="number" step="0.01" min="0" required
+                            value=(format!("{:.2}", default_contramt as f64 / 100.0))
+                            .mb-3.py-1.px-2.border.border-neutral-600.rounded.bg-neutral-900;
+                        label for "contrnote" .mr-4{"Notatka do datku " span.text-neutral-500{"(opcjonalnie)"}}
+                        input name="contrnote" type="text" .mb-3.py-1.px-2.border.border-neutral-600.rounded.bg-neutral-900;
+                        button type="submit" .p-1.px-2.border.border-neutral-600.rounded.ml-auto { "Odnotuj datek" }
                     }
                 }
-                label for="contramt" .mr-4{"Wielkość datku " span.text-neutral-500{"(w zł)"} }
-                input name="contramt" type="number" step="0.01" min="0" required
-                    value=(format!("{:.2}", default_contramt as f64 / 100.0))
-                    .mb-3.py-1.px-2.border.border-neutral-600.rounded.bg-neutral-900;
-                label for "contrnote" .mr-4{"Notatka do datku " span.text-neutral-500{"(opcjonalnie)"}}
-                input name="contrnote" type="text" .mb-3.py-1.px-2.border.border-neutral-600.rounded.bg-neutral-900;
-                button type="submit" .p-1.px-2.border.border-neutral-600.rounded.ml-auto { "Odnotuj datek" }
             }
         }
     }
