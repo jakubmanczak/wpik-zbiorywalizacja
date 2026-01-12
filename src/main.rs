@@ -9,7 +9,10 @@ use tokio::net::TcpListener;
 use crate::{
     api::{css, hellaur},
     database::db_check,
-    html::{controls, stats},
+    html::{
+        controls::{containers::controls_containers, controls},
+        stats::stats,
+    },
 };
 
 mod api;
@@ -35,6 +38,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let r = Router::new()
         .route("/", get(stats))
         .route("/panel", get(controls))
+        .route("/panel/pojemniki", get(controls_containers))
         .route("/login", post(api::login_redir))
         .route("/logout", post(api::logout_redir))
         .route("/live", get(hellaur))

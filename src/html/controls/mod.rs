@@ -1,57 +1,18 @@
-use axum::extract::Query;
-use axum::http::{HeaderMap, StatusCode, header};
-use axum::response::{IntoResponse, Response};
-use maud::{DOCTYPE, Markup, PreEscaped, html};
+use axum::{
+    extract::Query,
+    http::{HeaderMap, StatusCode, header},
+    response::{IntoResponse, Response},
+};
+use maud::{Markup, PreEscaped, html};
 use serde::Deserialize;
 
-use crate::users::auth::COOKIE_CLEAR;
-use crate::{database::open_db, users::User};
+pub mod containers;
 
-fn head(title: &str) -> Markup {
-    html! {
-        (DOCTYPE)
-        head {
-            link rel="stylesheet" href="/styles.css";
-            meta charset="utf-8";
-            meta name="viewport" content="width=device-width, initial-scale=1.0";
-            title { (title) }
-        }
-    }
-}
-
-pub async fn stats() -> Markup {
-    html! {
-        (head("Zbiorywalizacja WPiK"))
-        body.bg-neutral-900.text-neutral-300.lg:min-h-screen.w-full.flex.flex-col {
-            p.text-center.text-2xl.font-serif.py-4 { "Zbiorywalizacja WPiK" }
-            .pb-4.lg:pb-8.px-4.lg:px-8.w-full.grid.grid-cols-3.grid-rows-3.gap-3.flex-1 {
-                div class="bg-neutral-700 flex justify-center items-center border border-neutral-500 rounded row-span-2" {
-                    "Logo or something"
-                }
-                div class="bg-neutral-700 flex justify-center items-center text-center border border-neutral-500 rounded row-span-2 col-span-2" {
-                    "Main graph (total amts in each container - a graph)"
-                }
-                div class="bg-neutral-700 flex justify-center items-center border border-neutral-500 rounded" {
-                    "THIS CONTAINER is in the lead by THIS AMOUNT"
-                }
-                div class="bg-neutral-700 flex justify-center items-center border border-neutral-500 rounded" {
-                    "TOTAL AMOUNT OF DONATIONS and SUM OF DONATION AMOUNTS"
-                }
-                div class="bg-neutral-700 flex justify-center items-center border border-neutral-500 rounded" {
-                    "graph of lead over time"
-                }
-            }
-        }
-    }
-}
-
-pub const JS_CLEAN_QUERY: &str = r#"
-if (window.location.search) {
-    history.replaceState({}, '', window.location.pathname);
-}
-"#;
-pub const SVG_PACKAGE_OPEN: &str = include_str!("./lucideicons/package-open.svg");
-pub const SVG_SETTINGS: &str = include_str!("./lucideicons/settings.svg");
+use crate::{
+    database::open_db,
+    html::{JS_CLEAN_QUERY, SVG_PACKAGE_OPEN, SVG_SETTINGS, head},
+    users::{User, auth::COOKIE_CLEAR},
+};
 
 #[derive(Deserialize)]
 pub struct LoginErrorQuery {
@@ -113,6 +74,7 @@ pub async fn controls(headers: HeaderMap, Query(query): Query<LoginErrorQuery>) 
             }
             @if let Some(u) = user {
                 (controls_user_witaj(u))
+                (controls_user_witaj_links())
                 (controls_new_contributions(&containers, defcontramt))
                 // (controls_logs())
                 // (controls_globalconf())
@@ -182,7 +144,7 @@ const WITAJ_LINKS: &[(&str, &str)] = &[
 ];
 fn controls_user_witaj(u: User) -> Markup {
     html! {
-        .mx-auto.max-w-3xl.p-4 {
+        .mx-auto.max-w-3xl.p-4.pb-0 {
             .w-full.p-4.bg-neutral-800.text-neutral-200.rounded.border.border-neutral-600 {
                 .flex.flex-row.justify-between {
                     p.font-serif.text-center.text-xl { "Witaj, " (u.handle) "!" }
@@ -192,6 +154,12 @@ fn controls_user_witaj(u: User) -> Markup {
                     }
                 }
             }
+        }
+    }
+}
+fn controls_user_witaj_links() -> Markup {
+    html! {
+        .mx-auto.max-w-3xl.p-4.pt-0 {
             .w-full.flex.flex-col.sm:flex-row.gap-2.my-2 {
                 @for (name, url) in WITAJ_LINKS {
                     a href=(url) .p-2.flex-1.border.border-neutral-600.bg-neutral-800.rounded.relative.overflow-hidden {
